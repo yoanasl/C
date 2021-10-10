@@ -1,0 +1,619 @@
+#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_DEPRECATE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+const char* save = "products";
+
+typedef struct Products
+{
+	long long Id;
+	char Name[50];
+	char Date[12]; ///////////dd.mm.yyyy
+	int Quantity;
+	double Price;
+
+	struct Products* Next;
+}Product;
+
+Product* FindFirstProduct()
+{
+	FILE* fp = fopen(save, "rb");
+
+	if (fp == NULL)
+	{
+		return fp;
+	}
+
+	Product* firstProduct = calloc(1, sizeof(Product));
+	Product* head = NULL;
+
+	//ako uspeshno 
+	// n (1)
+	//ako ne != n ( 0)
+	int moreProducts = fread(firstProduct, sizeof(Product), 1, fp);
+
+	int counter = 0;
+
+	while (moreProducts == 1)
+	{
+		if (counter == 0)
+		{
+			head = firstProduct;
+		}
+
+		Product* secondProduct = calloc(1, sizeof(Product));
+		moreProducts = fread(secondProduct, sizeof(Product), 1, fp);
+
+		if (moreProducts == 1)
+		{
+			firstProduct->Next = secondProduct;
+			firstProduct = secondProduct;
+		}
+
+		counter++;
+	}
+
+	return head;
+}
+
+void FreeAllProducts(Product* head)
+{
+	while (head != NULL)
+	{
+		Product* temp = head->Next;
+		head = temp;
+	}
+}
+
+void SaveProduct(Product* product)
+{
+	FILE* fp = fopen(save, "ab");
+
+	fwrite(product, sizeof(Product), 1, fp);
+
+	fclose(fp);
+}
+
+void CreateDateString(int dd, int mm, int yy, char  date[12])
+{
+	char days[4];
+	itoa(dd, days, 10);// converts int data type to string data type
+	strcat(days, ".");
+	char months[4];
+	itoa(mm, months, 10);
+	strcat(months, ".");
+	char years[6];
+	itoa(yy, years, 10);
+
+	strcat(date, days);
+	strcat(date, months);
+	strcat(date, years);
+}
+
+// gets(garbage)
+// gets - nenujniqt text v garbage masiva
+char* ReadAndValidateDate()
+{
+	int dd, mm, yy;
+	char date[12] = "";
+	char garbage[100];
+
+	while (true)
+	{
+		printf("Enter date (DD.MM.YYYY format): ");
+		scanf("%d.%d.%d", &dd, &mm, &yy);
+
+		if (yy >= 1000 && yy <= 9999)
+		{
+			if (mm >= 1 && mm <= 12)
+			{
+				if ((dd >= 1 && dd <= 31) && (mm == 1 || mm == 3 || mm == 5 || mm == 7 || mm == 8 || mm == 10 || mm == 12))
+				{
+					CreateDateString(dd, mm, yy, date);
+
+					return date;
+				}
+				else if ((dd >= 1 && dd <= 30) && (mm == 4 || mm == 6 || mm == 9 || mm == 11))
+				{
+					CreateDateString(dd, mm, yy, date);
+
+					return date;
+				}
+				else if ((dd >= 1 && dd <= 28) && (mm == 2))
+				{
+					CreateDateString(dd, mm, yy, date);
+
+					return date;
+				}
+				else if (dd == 29 && mm == 2 && (yy % 400 == 0 || (yy % 4 == 0 && yy % 100 != 0)))
+				{
+					CreateDateString(dd, mm, yy, date);
+
+					return date;
+				}
+				else
+				{
+					printf("Invalid date\n");
+					gets(garbage);
+					continue;
+				}
+			}
+			else
+			{
+				printf("Invalid date\n");
+				gets(garbage);
+				continue;
+			}
+		}
+		else
+		{
+			printf("Invalid date\n");
+			gets(garbage);
+			continue;
+		}
+	}
+}
+
+char* ReadAndValidateName()
+{
+	char name[50];
+
+	printf("Enter product name: ");
+	scanf("%s", name);
+	bool validName = false;
+
+	int length = strlen(name);
+	for (size_t i = 0; i < length; i++)
+	{
+		if (isalpha(name[i]) != 0)
+		{
+			validName = true;
+
+		}
+		else
+		{
+			validName = false;
+
+		}
+
+	}
+if (validName!= false) {
+	return name;
+}
+else
+{
+	printf("Invalid name!");
+}
+
+}
+
+long long ReadAndValidateId()
+{
+	long long id;
+
+	while (true)
+	{
+		Product* firstProduct = FindFirstProduct();
+		Product* head = firstProduct;
+		bool exists = false;
+		printf("Enter product id: ");
+		scanf("%lli", &id);
+
+		if (id > 0 && id <= 999999999999)
+		{
+			while (firstProduct != NULL)
+			{
+				if (firstProduct->Id == id)
+				{
+					printf("Product with id %lli already exists\n", id);
+					exists = true;
+					break;
+				}
+
+				if (firstProduct->Next == NULL)
+				{
+					break;
+				}
+
+				firstProduct = firstProduct->Next;
+			}
+
+			if (!exists)
+			{
+				return id;
+			}
+		}
+
+		printf("Invalid id\n");
+	}
+}
+
+long long ReadId()
+{
+	long long id;
+
+	while (true)
+	{
+		printf("Enter product id: ");
+		scanf("%lli", &id);
+
+		if (id > 0 && id <= 999999999999)
+		{
+
+			return id;
+		}
+
+		printf("Invalid id\n");
+	}
+}
+
+double ReadAndValidatePrice()
+{
+	double price;
+
+	while (true)
+	{
+		printf("Enter product price: ");
+		scanf("%lf", &price);
+
+		if (price > 0)
+		{
+			return price;
+		}
+
+		printf("Invalid price\n");
+	}
+}
+
+int ReadAndValidateQuantity()
+{
+	int quantity;
+
+	while (true)
+	{
+		printf("Enter product quantity: ");
+		scanf("%d", &quantity);
+
+		if (quantity > 0)
+		{
+			return quantity;
+		}
+
+		printf("Invalid quantity\n");
+	}
+}
+
+void ReadAndSaveProduct()
+{
+	Product product;
+	product.Next = NULL;
+
+	product.Id = ReadAndValidateId();
+	strcpy(product.Name, ReadAndValidateName());
+	product.Price = ReadAndValidatePrice();
+	product.Quantity = ReadAndValidateQuantity();
+	strcpy(product.Date, ReadAndValidateDate());
+
+	SaveProduct(&product);
+}
+
+void ChangeProductQuantity()
+{
+	Product* firstProduct = FindFirstProduct();
+	Product* head = firstProduct;
+
+	if (firstProduct == NULL)
+	{
+		printf("No products available \n");
+		return;
+	}
+
+	long long id = ReadId();
+	bool found = false;
+
+	FILE* fp = fopen(save, "wb");
+	fclose(fp);
+
+	while (firstProduct != NULL)
+	{
+		if (firstProduct->Id == id)
+		{
+			found = true;
+
+			int answer;
+			while (true)
+			{
+				printf("Do you want to add or substract to/from the quantity [1 - ADD] [2 - SUBSTRACT]\n");
+				scanf("%d", &answer);
+
+				if (answer == 1 || answer == 2)
+				{
+					break;
+				}
+
+				printf("Invalid answer\n");
+			}
+
+			int quantity = ReadAndValidateQuantity();
+
+			if (answer == 2)
+			{
+				quantity = -quantity;
+
+				if (abs(quantity) > abs(firstProduct->Quantity))
+				{
+					SaveProduct(firstProduct);
+					found = false;
+					break;
+				}
+			}
+
+			firstProduct->Quantity += quantity;
+
+			if (firstProduct->Quantity != 0)
+			{
+				SaveProduct(firstProduct);
+			}
+		}
+		else
+		{
+			SaveProduct(firstProduct);
+		}
+
+		if (firstProduct->Next == NULL)
+		{
+			break;
+		}
+
+		firstProduct = firstProduct->Next;
+	}
+
+	if (!found)
+	{
+		printf("No product with id %lli\n", id);
+	}
+
+	FreeAllProducts(head);
+}
+
+int IntParseYear(char* date)
+{
+	char currDateYearString[5] = { '0' };
+	for (size_t i = 0; i < 4; i++)
+	{
+		currDateYearString[i] = date[i + 6];
+	}
+
+	return atoi(currDateYearString);
+}
+
+int IntParseMonth(char* date)
+{
+	char currDateMonthString[3] = { '0' };
+	char singletonMonth[2] = { '0' };
+	switch (date[3])
+	{
+	case '0': singletonMonth[0] = date[4];
+		return atoi(singletonMonth);
+	}
+	for (size_t i = 0; i < 2; i++)
+	{
+		currDateMonthString[i] = date[i + 3];
+	}
+
+	return atoi(currDateMonthString);
+}
+
+int IntParseDay(char* date)
+{
+	char currDateDayString[3] = { '0' };
+	char singletonDay[2] = { '0' };
+	switch (date[0])
+	{
+	case '0': singletonDay[0] = date[1];
+		return atoi(singletonDay);
+	}
+	for (size_t i = 0; i < 2; i++)
+	{
+		currDateDayString[i] = date[i];
+	}
+
+	return atoi(currDateDayString);
+}
+
+bool CompareDates(int currDateYear, int newDateYear, int currDateMonth, int newDateMonth, int currDateDay, int newDateDay)
+{
+	if (currDateYear > newDateYear)
+	{
+		return false;
+	}
+	else if (currDateYear < newDateYear)
+	{
+		return true;
+	}
+	else
+	{
+		if (currDateMonth > newDateMonth)
+		{
+			return false;
+		}
+		else if (currDateMonth < newDateMonth)
+		{
+			return true;
+		}
+		else
+		{
+			if (currDateDay > newDateDay)
+			{
+				return false;
+			}
+
+			return true;
+		}
+	}
+}
+
+bool ProductIsExpired(char* currDate, char* newDate)
+{
+	int currDateYear, currDateMonth, currDateDay;
+	int newDateYear, newDateMonth, newDateDay;
+
+	currDateYear = IntParseYear(currDate);
+	currDateMonth = IntParseMonth(currDate);
+	currDateDay = IntParseDay(currDate);
+
+	newDateYear = IntParseYear(newDate);
+	newDateMonth = IntParseMonth(newDate);
+	newDateDay = IntParseDay(newDate);
+
+	return CompareDates(currDateYear, newDateYear, currDateMonth, newDateMonth, currDateDay, newDateDay);
+}
+
+void PrintProduct(Product* product)
+{
+	printf("----------------------\n");
+	printf("Id: %lli\n", product->Id);
+	printf("Name: %s\n", product->Name);
+	printf("Price: %.2lf\n", product->Price);
+	printf("Quantity: %d\n", product->Quantity);
+	printf("Date : %s\n", product->Date);
+	printf("----------------------\n");
+}
+
+void PrintAllProducts()
+{
+	Product* firstProduct = FindFirstProduct();
+	Product* head = firstProduct;
+	int counter = 0;
+
+	while (firstProduct != NULL)
+	{
+		counter++;
+		printf("Product #%d\n", counter);
+		PrintProduct(firstProduct);
+
+		if (firstProduct->Next == NULL)
+		{
+			break;
+		}
+
+		firstProduct = firstProduct->Next;
+	}
+
+	FreeAllProducts(head);
+}
+
+void PrintProductWithGivenId()
+{
+	Product* firstProduct = FindFirstProduct();
+	Product* head = firstProduct;
+	long long id = ReadId();
+	bool found = false;
+
+	while (firstProduct != NULL)
+	{
+		if (id == firstProduct->Id)
+		{
+			PrintProduct(firstProduct);
+			found = true;
+			break;
+		}
+
+		if (firstProduct->Next == NULL)
+		{
+			break;
+		}
+
+		firstProduct = firstProduct->Next;
+	}
+
+	if (!found)
+	{
+		printf("Product with id %lli doesn't exist\n", id);
+	}
+
+	FreeAllProducts(head);
+}
+
+void PrintAllProductsWithExpiredDatesOfUsage()
+{
+	Product* firstProduct = FindFirstProduct();
+	Product* head = firstProduct;
+
+	if (firstProduct == NULL)
+	{
+		printf("No available products\n");
+	}
+
+	char date[12] = { '0' };
+	strcpy(date, ReadAndValidateDate());
+
+	while (firstProduct != NULL)
+	{
+		if (ProductIsExpired(date, firstProduct->Date))
+		{
+			printf("--------------------------------------------\n");
+			printf("Product with id %lli has an expired date\n", firstProduct->Id);
+			printf("--------------------------------------------\n");
+		}
+
+		if (firstProduct->Next == NULL)
+		{
+			break;
+		}
+
+		firstProduct = firstProduct->Next;
+	}
+
+	FreeAllProducts(head);
+}
+
+void PrintMenu()
+{
+	printf("Give me a command!\n");
+	printf("1 - Add product\n");
+	printf("2 - Print ALL products\n");
+	printf("3 - Change a product's quantity\n");
+	printf("4 - Print all products with EXPIRED date\n");
+	printf("5 - Print product with given id\n");
+	printf("6 - Stop\n");
+}
+
+int main()
+{
+	int command;
+	bool stop = false;
+
+	while (!stop)
+	{
+		PrintMenu();
+		scanf("%d", &command);
+
+		switch (command)
+		{
+		case 1: ReadAndSaveProduct();
+			break;
+		case 2: PrintAllProducts();
+			break;
+		case 3: ChangeProductQuantity();
+			break;
+		case 4: PrintAllProductsWithExpiredDatesOfUsage();
+			break;
+		case 5: PrintProductWithGivenId();
+			break;
+		case 6: stop = true;
+			break;
+		default:
+			printf("Invalid command.\n");
+			break;
+		}
+	}
+
+	printf("Thank you for your time!\n");
+
+	return 0;
+}
+
